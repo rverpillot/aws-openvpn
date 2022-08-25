@@ -6,11 +6,13 @@
 - python3
 
 ## Installation
+- install AWS SDK (boto3).
 ```sh
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+- Setup your AWS credentials.
 
 ## Create certificates for server and client
 ```sh
