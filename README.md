@@ -1,4 +1,4 @@
-# Create a VPN to an AWS VPC
+# Create an AWS VPN endpoint
 
 ## Requirements
 - openvpn
