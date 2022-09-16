@@ -1,19 +1,21 @@
 #! /usr/bin/env python3
 
-# Usage: create_vpn.py 10.2.0.0/22 subnet_id
+# Usage: create_vpn.py 10.2.0.0/22 [subnet_id]
 
 import sys
 import time
 
 import boto3
 
-
-if len(sys.argv) != 3:
-    print(f"Usage: {sys.argv[0]} cidr subnet_id" )
+if len(sys.argv) >= 2:
+    vpn_cidr = sys.argv[1]
+    subnet_id = None
+if len(sys.argv) == 3:
+    subnet_id = sys.argv[2]
+if len(sys.argv) < 2 or len(sys.argv) > 3:
+    print(f"Usage: {sys.argv[0]} cidr [subnet_id]" )
     sys.exit(0)
 
-vpn_cidr = sys.argv[1]
-subnet_id = sys.argv[2]
 vpn_name = "vpn-endpoint"
 cert_server = {"name": "vpn-server"}
 
@@ -21,6 +23,40 @@ vpn_id = None
 sg_id = None
 
 ec2 = boto3.client('ec2')
+
+res = ec2.describe_subnets()
+subnets = res["Subnets"]
+if not subnet_id:
+    print("Select the target subnet:")
+    index = 1
+    for subnet in subnets:
+        name = ""
+        if "Tags" in subnet:
+            for tag in subnet["Tags"]:
+                if tag["Key"] == "Name":
+                    name = tag["Value"]
+                    break
+        print(f"  {index}: {subnet['SubnetId']} ({name} - {subnet['AvailabilityZone']})")
+        index += 1
+    print("Number: ", end='')
+    try:
+        index = int(input()) - 1
+        subnet_id = subnets[index]['SubnetId']
+        vpc_id = subnets[index]["VpcId"]
+    except:
+        sys.exit(1)
+else:
+    for subnet in subnets:
+        if subnet['SubnetId'] == subnet_id:
+            vpc_id = subnet["VpcId"]
+            break
+    else:
+        print(f"Subnet '{subnet_id}' doesn't exist !")
+        sys.exit(1)
+
+print(f"Vpc:    {vpc_id}")
+print(f"Subnet: {subnet_id}")
+
 
 res = ec2.describe_client_vpn_endpoints()
 for e in res["ClientVpnEndpoints"]:
@@ -36,14 +72,6 @@ for e in res["ClientVpnEndpoints"]:
 if vpn_id:
     print("VPN endpoint already exists")
     sys.exit(0)
-
-
-res = ec2.describe_subnets(SubnetIds=[subnet_id])
-if len(res["Subnets"]) == 0:
-    print(f"Subnet '{subnet_id} doesn't exist !")
-    sys.exit(1)
-
-vpc_id = res["Subnets"][0]["VpcId"]
 
 with open("pki/ca.crt") as f:
     cert_server["ca"]= f.read()

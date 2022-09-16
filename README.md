@@ -13,6 +13,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 - Setup your AWS credentials.
+```sh
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+```
 
 ## Create certificates for server and client
 - create CA and server certificates
@@ -26,7 +30,7 @@ pip install -r requirements.txt
 
 ## Import the server certificate to ACM and create the VPN endpoint
 ```sh
-./create_vpn.py CIDR SUBNET_ID
+./create_vpn.py CIDR [SUBNET_ID]
 ```
 
 ## Start the VPN
